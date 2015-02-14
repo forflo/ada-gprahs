@@ -1,0 +1,10 @@
+bin/
+lib/
+obj/
+GNAT_TEMP*
+*#*#
+*.#*
+*.#*
+*.ali
+*.o
+*.so
