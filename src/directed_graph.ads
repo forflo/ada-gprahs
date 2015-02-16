@@ -23,8 +23,8 @@ is
       Id : Edge_Id;
       Decoration : Edge_Decoration;
 
-      Source : Vertex_Id;
-      Target : Vertex_Id;
+      Source : not null access Vertex;
+      Target : not null access Vertex;
    end record;
    function "="(left : Edge; right : Edge) return boolean;
 
@@ -79,7 +79,7 @@ is
      Pre => Contains(Inside, Of_Vertex),
      Post => (for all Value of Outgoing_Edges'Result =>
                 Contains(Inside, Edge => Value) and
-                Value.Source = Of_Vertex.Id);
+                Value.Source.Id = Of_Vertex.Id);
 
    --  function Incoming_Edges
    --    (Inside : Graph_Data;

@@ -10,14 +10,13 @@ is
       (Left.Source = Right.Source and Left.Id = Right.Id);
 
    function "<"(Left : Edge; Right : Edge) return Boolean is
-      (if Left.Source < Right.Source then Left.Id < Right.Id);
+      (if Left.Source.Id < Right.Source.Id then Left.Id < Right.Id);
 
    function "="(Left : Vertex_Data; Right : Vertex_Data) return Boolean is
       (Left.Vertex_Info = Right.Vertex_Info);
 
    function "<"(Left : Vertex_Data; Right : Vertex_Data) return Boolean is
       (Left.Vertex_Info.Id < Right.Vertex_Info.Id);
-
 
    function Contains_Any_Matching is
       new Vector_Utils.Contains_Any_Matching(Vertex_Vectors);
@@ -49,7 +48,7 @@ is
       To : Vertex)
      return Boolean is
       (for some Edge of Inside.Edges =>
-         Edge.Source = From.Id and Edge.Target = To.Id);
+         Edge.Source.Id = From.Id and Edge.Target.Id = To.Id);
 
    procedure Length_And_Index_Out
      (Inside : Graph_Data;
@@ -78,7 +77,7 @@ is
       Data_Index : Positive;
       Proper_Hint : Vertex_Vectors.Extended_Index;
    begin
-      -- We try to Pick up the Vertex at it's ID, because it's wuite likley that it's
+      -- We try to Pick up the Vertex at it's ID, because it's quite likley that it's
       -- there when deletions of verticies are rare.
       -- So it's a good idea to start loooking there, this will likley reduce the
       -- Number of iterations for the Binary_Search invloved
@@ -90,7 +89,7 @@ is
       Proper_Hint :=
         (if Positive(Of_Vertex.Id) <= Inside.Edge_Pointers.Last_Index
            then Positive(Of_Vertex.Id)
-           else Inside.Edge_Pointers.Last_Index);
+           else Vertex_Vectors.No_Index);
 
       Data_Index := Find
         (Container => Inside.Edge_Pointers,
@@ -100,13 +99,14 @@ is
 
       Start_Edge_Index := Data.First_Edge;
       Next_Edge_Index :=
-        (if Data_Index + 1 >= Inside.Edge_Pointers.Last_Index
-           then Inside.Edge_Pointers(Data_Index + 1)
+        (if Data_Index + 1 <= Inside.Edge_Pointers.Last_Index
+           then Inside.Edge_Pointers(Data_Index + 1).First_Edge
            else Start_Edge_Index);
 
       Length := Next_Edge_Index - Start_Edge_Index;
       Edge_Index := Start_Edge_Index;
    end Length_And_Index_Out;
+
    function Outgoing_Edges
      (Inside : Graph_Data;
       Of_Vertex : Vertex)
@@ -120,7 +120,7 @@ is
       declare
          Result : Edges(Positive range 1..Length);
       begin
-         for Index in First_Edge..Length loop
+         for Index in First_Edge..(First_Edge + Length) loop
             Result(Index) := Inside.Edges(Index);
          end loop;
          return Result;
