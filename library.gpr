@@ -9,7 +9,7 @@ library project Library is
    for Object_Dir use "obj";
    for Library_Dir use "lib";
    for Exec_Dir use "bin";
-   
+
     package Check is
        for Default_Switches ("ada") use ("-rules", "-from=style-rules");
     end Check;
