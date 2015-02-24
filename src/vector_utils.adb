@@ -8,6 +8,7 @@ package body Vector_Utils is
       (for some Value of Container =>
          Predicate(Value));
 
+   -- TODO: this fails hard when Container is empty!!!
    function Find_Matching
      (Container : Vect.Vector;
       Judge : not null access function (Element : Vect.Element_Type) return Search_Hint;
@@ -41,7 +42,7 @@ package body Vector_Utils is
       -- TODO: Take proximity to hint into account
       -- and linear search for a bit before trying
 
-      if Container.Length = 0 then
+      if Is_Empty(Container) then
          return No_Index;
       end if;
 

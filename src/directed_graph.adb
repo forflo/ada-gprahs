@@ -8,7 +8,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Directed_Graph
 is
-
    package Integer_IO is new Ada.Text_IO.Enumeration_IO(Integer);
    use Integer_IO;
 
@@ -34,12 +33,14 @@ is
       (Left.Edge = Right.Edge);
 
    function "<"(Left : Edge_Data; Right : Edge_Data) return Boolean is
-      (if Left.Edge.Source = Right.Edge.Source then Left.Edge.Id < Right.Edge.Id else False);
+     (if Left.Edge.Source = Right.Edge.Source then Left.Edge.Id < Right.Edge.Id else False);
 
    function Find_Vertex_Data_Index
      (Inside : Graph_Data;
       Of_Vertex : Vertex)
       return Index
+   with Pre => Contains(Inside => Inside, Vertex => Of_Vertex),
+        Post => Inside.Edge_Pointers(Find_Vertex_Data_Index'Result).Vertex = Of_Vertex
    is
       function Find is new Find_Matching(Vertex_Vectors);
 
@@ -273,135 +274,68 @@ is
       return New_Edge;
    end Add_New_Edge;
 
-   --  function All_Verticies(Inside : Graph_Data) return Verticies
-   --  is
-   --     -- TODO: is this cast sound?
-   --     Num_Verticies : constant Natural := Natural(Inside.Edge_Pointers.Length);
-   --     Result : Verticies(Positive range 1..Num_Verticies);
-   --     Result_Index : Positive := 1;
-   --  begin
-   --     for Value of Inside.Edge_Pointers loop
-   --        Result(Result_Index) := Value.Vertex_Info;
-   --        Result_Index := Result_Index + 1;
-   --     end loop;
-   --     return Result;
-   --  end;
+   function All_Verticies(Inside : Graph_Data) return Verticies
+   is
+      -- TODO: is this cast sound?
+      Num_Verticies : constant Natural := Natural(Inside.Edge_Pointers.Length);
+      Result : Verticies(Positive range 1..Num_Verticies);
+      Result_Index : Positive := 1;
+   begin
+      for Value of Inside.Edge_Pointers loop
+         Result(Result_Index) := Value.Vertex;
+         Result_Index := Result_Index + 1;
+      end loop;
+      return Result;
+   end;
 
-   --  function All_Edges(Inside : Graph_Data) return Edges
-   --  is
-   --     -- TODO: is this cast sound?
-   --     Num_Edges : constant Natural := Natural(Inside.Edges.Length);
-   --     Result : Edges(Positive range 1..Num_Edges);
-   --     Result_Index : Positive := 1;
-   --  begin
-   --     for Value of Inside.Edges loop
-   --        Result(Result_Index) := Value;
-   --        Result_Index := Result_Index + 1;
-   --     end loop;
-   --     return Result;
-   --  end;
+   function All_Edges(Inside : Graph_Data) return Edges
+   is
+      -- TODO: is this cast sound?
+      Num_Edges : constant Natural := Natural(Inside.Edges.Length);
+      Result : Edges(Positive range 1..Num_Edges);
+      Result_Index : Positive := 1;
+   begin
+      for Value of Inside.Edges loop
+         Result(Result_Index) := Value.Edge;
+         Result_Index := Result_Index + 1;
+      end loop;
+      return Result;
+   end;
 
-   --  function Find is new Find_Matching(Vertex_Vectors);
-   --  function Find is new Find_Matching(Edge_Vectors);
+   function Contains_Any_Matching is
+     new Vector_Utils.Contains_Any_Matching(Vertex_Vectors);
 
+   function Contains_Any_Matching is
+      new Vector_Utils.Contains_Any_Matching(Edge_Vectors);
 
-   --  function "="(Left : Vertex; Right : Vertex) return Boolean is
-   --     (Left.Id = Right.Id);
+   function Contains(Inside : Graph_Data; Vertex : Directed_Graph.Vertex) return Boolean is
+      function IsThisVertex(Data : Vertex_Data) return Boolean is
+      begin
+         return Data.Vertex.Id = Vertex.Id;
+      end IsThisVertex;
+   begin
+      return Contains_Any_Matching(Inside.Edge_Pointers, IsThisVertex'Access);
+   end Contains;
 
-   --  function "="(Left : Edge; Right : Edge) return Boolean is
-   --     (Left.Source = Right.Source and Left.Id = Right.Id);
+   function Contains(Inside : Graph_Data; Edge : Directed_Graph.Edge) return Boolean is
+      function IsThisEdge(Data : Edge_Data) return Boolean is
+      begin
+         return Data.Edge.Id = Edge.Id;
+      end IsThisEdge;
+   begin
+      return Contains_Any_Matching(Inside.Edges, IsThisEdge'Access);
+   end Contains;
 
-   --  function "<"(Left : Edge; Right : Edge) return Boolean is
-   --     (if Left.Source < Right.Source then Left.Id < Right.Id);
-
-   --  function "="(Left : Vertex_Data; Right : Vertex_Data) return Boolean is
-   --     (Left.Vertex_Info = Right.Vertex_Info);
-
-   --  function "<"(Left : Vertex_Data; Right : Vertex_Data) return Boolean is
-   --     (Left.Vertex_Info.Id < Right.Vertex_Info.Id);
-
-   --  function Add_New_Vertex
-   --    (Into : in out Graph_Data;
-   --     Decoration : Vertex_Decoration)
-   --     return Vertex
-   --  is
-   --    New_Id : constant Vertex_Id := Into.Last_Created_Vertex + 1;
-   --    New_Vertex : constant Vertex := (Id => New_Id, Decoration => Decoration);
-
-   --    Last_Edge_Index : constant Positive :=
-   --       Into.Edge_Pointers.Last_Element.First_Edge;
-
-   --    New_Vertex_Data : constant Vertex_Data :=
-   --       (First_Edge => Last_Edge_Index, Vertex_Info => New_Vertex);
-   --  begin
-   --     Into.Edge_Pointers.Append(New_Vertex_Data);
-   --     Into.Last_Created_Vertex := New_Id;
-   --     return (New_Id, Decoration);
-   --  end Add_New_Vertex;
-
-   --  function Add_New_Edge
-   --    (Into : in out Graph_Data;
-   --     From : Vertex;
-   --     To : Vertex;
-   --     via : Edge_Decoration)
-   --    return Edge
-   --  is
-   --     New_Id : constant Edge_Id := Into.Last_Created_Edge + 1;
-   --     New_Edge : constant Edge :=
-   --        (Id => New_Id,
-   --         Decoration => via,
-   --         Source => From.Id,
-   --         Target => To.Id);
-
-   --     Length : Natural;
-   --     First_Edge : Positive;
-   --     Last_Edge : Positive;
-   --  begin
-   --     -- TODO: update next edge pointer to point one to the right
-   --     Into.Last_Created_Edge := New_Id;
-
-   --     Find_Edge_Index_Range(Into, From, Length, First_Edge);
-
-   --     Last_Edge := First_Edge + Length;
-   --     Edge_Vectors.Insert
-   --        (Container => Into.Edges,
-   --         Before => Last_Edge,
-   --         New_Item => New_Edge);
-
-   --     return New_Edge;
-   --  end Add_New_Edge;
-
-   --  function Contains_Any_Matching is
-   --    new Vector_Utils.Contains_Any_Matching(Vertex_Vectors);
-
-   --  function Contains_Any_Matching is
-   --     new Vector_Utils.Contains_Any_Matching(Edge_Vectors);
-
-   --  function Contains(Inside : Graph_Data; Vertex : Directed_Graph.Vertex) return Boolean is
-   --     function IsThisVertex(Vert : Vertex_Data) return Boolean is
-   --     begin
-   --        return Vert.Vertex_Info.Id = Vertex.Id;
-   --     end IsThisVertex;
-   --  begin
-   --     return Contains_Any_Matching(Inside.Edge_Pointers, IsThisVertex'Access);
-   --  end Contains;
-
-   --  function Contains(Inside : Graph_Data; Edge : Directed_Graph.Edge) return Boolean is
-   --     function IsThisEdge(Other_Edge : Directed_Graph.Edge) return Boolean is
-   --     begin
-   --        return Other_Edge = Edge;
-   --     end IsThisEdge;
-   --  begin
-   --     return Contains_Any_Matching(Inside.Edges, IsThisEdge'Access);
-   --  end Contains;
-
-   --  function Connected_Directly
-   --    (Inside : Graph_Data;
-   --     From : Vertex;
-   --     To : Vertex)
-   --    return Boolean is
-   --     (for some Edge of Inside.Edges =>
-   --        Edge.Source = From.Id and Edge.Target = To.Id);
+   -- TODO: this can be done more efficiently
+   -- simply use the From to find the meta data
+   -- then we know exactly where to look
+   function Connected_Directly
+     (Inside : Graph_Data;
+      From : Vertex;
+      To : Vertex)
+     return Boolean is
+      (for some Data of Inside.Edges =>
+         Data.Edge.Source = From.Id and Data.Edge.Target = To.Id);
 
 
    --  function Outgoing_Edges

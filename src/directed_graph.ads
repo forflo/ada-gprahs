@@ -19,7 +19,6 @@ is
    end record;
    function "="(left : Vertex; right : Vertex) return boolean;
 
-   -- penus
    type Edge is record
       Id : Edge_Id;
       Decoration : Edge_Decoration;
@@ -32,26 +31,27 @@ is
    function Add_New_Vertex
      (Into : in out Graph_Data;
       Decoration : Vertex_Decoration)
-     return Vertex;
-   --  with
-   --    Post => Contains(Inside => Into, Vertex => Add_New_Vertex'Result);
+     return Vertex
+   with
+     Post => Contains(Into, Vertex => Add_New_Vertex'Result);
 
    function Add_New_Edge
      (Into : in out Graph_Data;
       From : Vertex;
       To : Vertex;
       via : Edge_Decoration)
-     return Edge;
-   --  with
-   --    Pre => Contains(Into, Vertex => From) and
-   --    Contains(Into, Vertex => To),
-   --    Post => Contains(Into, Edge => Add_New_Edge'Result);
+     return Edge
+   with
+     Pre => Contains(Into, Vertex => From) and
+     Contains(Into, Vertex => To),
+     Post => Contains(Into, Edge => Add_New_Edge'Result);
 
    type Verticies is array (Positive range <>) of Vertex;
    type Edges is array (Positive range <>) of Edge;
 
-   --  function All_Verticies(Inside : Graph_Data) return Verticies;
-   --  function All_Edges(Inside : Graph_Data) return Edges;
+   function All_Verticies(Inside : Graph_Data) return Verticies;
+   function All_Edges(Inside : Graph_Data) return Edges;
+
    --  function Neighbours
    --    (Inside : Graph_Data;
    --     Of_Vertex : Vertex)
@@ -82,17 +82,20 @@ is
    --               Value.Target = Of_Vertex.Id);
 
    -- Assertion Properties
-   --  function Contains(Inside : Graph_Data; Vertex : Directed_Graph.Vertex) return boolean;
-   --  function Contains(Inside : Graph_Data; Edge : Directed_Graph.Edge) return boolean;
+   function Contains(Inside : Graph_Data; Vertex : Directed_Graph.Vertex) return Boolean;
+   function Contains(Inside : Graph_Data; Edge : Directed_Graph.Edge) return Boolean;
 
-   --  function Connected_Directly
-   --    (Inside : Graph_Data;
-   --     From : Vertex;
-   --     To : Vertex)
-   --    return Boolean
-   --  with
-   --    Pre => Contains(Inside,Vertex => From) and
-   --    Contains(Inside, Vertex => To);
+   function Connected_Directly
+     (Inside : Graph_Data;
+      From : Vertex;
+      To : Vertex)
+     return Boolean
+   with
+     Pre => Contains(Inside,Vertex => From) and
+     Contains(Inside, Vertex => To);
+
+   -- TODO: should this guy be in a child package?
+   -- Debugging
    procedure Dump(Graph : Graph_Data);
 
 private
