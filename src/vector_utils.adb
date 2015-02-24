@@ -10,6 +10,7 @@ package body Vector_Utils is
 
    function Find_Matching
      (Container : Vect.Vector;
+      Judge : not null access function (Element : Vect.Element_Type) return Search_Hint;
       Index_Hint : Vect.Extended_Index := Vect.No_Index;
       Upper_Bound_Hint : Vect.Extended_Index := Vect.No_Index;
       Lower_Bound_Hint : Vect.Extended_Index := Vect.No_Index)
