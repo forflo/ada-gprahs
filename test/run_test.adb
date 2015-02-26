@@ -3,6 +3,12 @@ with Directed_Graph;
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure Run_Test is
+   package Bool_Io is new Ada.Text_IO.Enumeration_Io(Boolean);
+   use Bool_Io;
+
+   package Int_Io is new Ada.Text_IO.Enumeration_Io(Integer);
+   use Int_Io;
+
    package Test_Graph is new Directed_Graph(Integer, Integer);
    use Test_Graph;
    
@@ -25,4 +31,9 @@ begin
    E3 := Add_New_Edge(Graph, V1, V3, 5);
    E4 := Add_New_Edge(Graph, V4, V3, 5);
    Dump(Graph);
+   Put(Connected_Directly(Graph, V3, V2));
+   New_Line;
+   Put(All_Verticies(Graph)'Length);
+   Put(All_Edges(Graph)'Length);
+   Put(Outgoing_Edges(Graph, V3)'Length);
 end Run_Test;

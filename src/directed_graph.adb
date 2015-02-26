@@ -37,20 +37,21 @@ is
 
    function Find_Vertex_Data_Index
      (Inside : Graph_Data;
-      Of_Vertex : Vertex)
+      Id : Vertex_Id)
       return Index
-   with Pre => Contains(Inside => Inside, Vertex => Of_Vertex),
-        Post => Inside.Edge_Pointers(Find_Vertex_Data_Index'Result).Vertex = Of_Vertex
+      with
+        --  Pre => Contains(Inside, Id),
+        Post => Inside.Edge_Pointers(Find_Vertex_Data_Index'Result).Vertex.Id = Id
    is
       function Find is new Find_Matching(Vertex_Vectors);
 
       function Judge(Data : Vertex_Data) return Search_Hint
       is
-         Id : constant Vertex_Id := Data.Vertex.Id;
+         Other_Id : constant Vertex_Id := Data.Vertex.Id;
       begin
-         if Id < Of_Vertex.Id then
+         if Other_Id < Id then
             return Bigger;
-         elsif Of_Vertex.Id < Id then
+         elsif Id < Other_Id then
             return Smaller;
          else
             return Correct;
@@ -70,8 +71,8 @@ is
       -- But it's unclear when exactly this is the case or when the Proper_Hint
       -- Becomes useless or even harmful.
       Proper_Hint :=
-        (if Index(Of_Vertex.Id) <= Inside.Edge_Pointers.Last_Index
-           then Index(Of_Vertex.Id)
+        (if Index(Id) <= Inside.Edge_Pointers.Last_Index
+           then Index(Id)
            else Vertex_Vectors.No_Index);
 
       Data_Index := Find
@@ -114,12 +115,17 @@ is
    is
       New_Id : constant Edge_Id := Into.Last_Created_Edge + 1;
 
+      Source_Index : constant Index := Find_Vertex_Data_Index(Into, From.Id);
+      Target_Index : constant Index := Find_Vertex_Data_Index(Into, To.Id);
+
+      Source_Data : constant Vertex_Data := Into.Edge_Pointers(Source_Index);
+      Target_Data : constant Vertex_Data := Into.Edge_Pointers(Target_Index);
+
       New_Edge : constant Edge :=
         (Id => New_Id,
          Decoration => via,
          Source => From.Id,
          Target => To.Id);
-
       -- we can only determine the Next_Incoming
       -- once we looked ad the target Vertex_Data
       New_Edge_Data : Edge_Data :=
@@ -129,11 +135,6 @@ is
       -- we can only determine the new position
       -- after inspecting the source meta data
       New_Edge_Index : Index;
-
-      Source_Index : Index;
-      Target_Index : Index;
-      Source_Data : Vertex_Data;
-      Target_Data : Vertex_Data;
 
       -- Updates the source meta data after the insertion
       -- CAUTION: this procedure relies New_Edge_Index
@@ -167,7 +168,7 @@ is
             Data.Incoming_Edges := 1;
             -- there are already some coming edges
          else
-            -- make the edge pointer point to the current head
+            -- make the edge pointer point to the new head
             Data.First_Incoming_Edge := New_Edge_Index;
             Data.Incoming_Edges := Data.Incoming_Edges + 1;
          end if;
@@ -195,12 +196,6 @@ is
 
    begin
       Into.Last_Created_Edge := New_Id;
-
-      Source_Index := Find_Vertex_Data_Index(Into, From);
-      Target_Index := Find_Vertex_Data_Index(Into, To);
-
-      Source_Data := Into.Edge_Pointers(Source_Index);
-      Target_Data := Into.Edge_Pointers(Target_Index);
 
       -- We just append the new edge.
       -- this is the fast, nice and easy case
@@ -246,18 +241,16 @@ is
            (Container => Into.Edges,
             Before => New_Edge_Index,
             New_Item => New_Edge_Data);
-      end if;
 
-      -- after inserting we have to adjust the indexes to all
-      -- edges after this one
-      -- TODO: this is a null operation
-      -- in the append case
-      for Cursor in Into.Edge_Pointers.Iterate loop
-         Vertex_Vectors.Update_Element
-           (Container => Into.Edge_Pointers,
-            Position => Cursor,
-            Process => Bump_Pointers'Access);
-      end loop;
+         -- after inserting we have to adjust the indexes to all
+         -- edges after this one
+         for Cursor in Into.Edge_Pointers.Iterate loop
+            Vertex_Vectors.Update_Element
+              (Container => Into.Edge_Pointers,
+               Position => Cursor,
+               Process => Bump_Pointers'Access);
+         end loop;
+      end if;
 
       -- Update Source meta data
       Vertex_Vectors.Update_Element
@@ -285,6 +278,7 @@ is
          Result(Result_Index) := Value.Vertex;
          Result_Index := Result_Index + 1;
       end loop;
+
       return Result;
    end;
 
@@ -299,6 +293,7 @@ is
          Result(Result_Index) := Value.Edge;
          Result_Index := Result_Index + 1;
       end loop;
+
       return Result;
    end;
 
@@ -338,26 +333,96 @@ is
          Data.Edge.Source = From.Id and Data.Edge.Target = To.Id);
 
 
-   --  function Outgoing_Edges
-   --    (Inside : Graph_Data;
-   --     Of_Vertex : Vertex)
-   --    return Edges
-   --  is
-   --     Length : Natural;
-   --     First_Edge : Positive;
-   --  begin
-   --     -- TODO: we assume Of_Vertex is in the Graph
-   --     -- and thus First_Edge is always a valid index
-   --     Find_Edge_Index_Range(Inside,Of_Vertex, Length, First_Edge);
-   --     declare
-   --        Result : Edges(Positive range 1..Length);
-   --     begin
-   --        for Index in First_Edge..(First_Edge + Length) loop
-   --           Result(Index) := Inside.Edges(Index);
-   --        end loop;
-   --        return Result;
-   --     end;
-   --  end Outgoing_Edges;
+   function Outgoing_Edges
+     (Inside : Graph_Data;
+      Of_Vertex : Vertex)
+     return Edges
+   is
+      Empty : constant Edges(Positive range 1..0) := (others => <>);
+
+      Vertex_Index : constant Index :=
+         Find_Vertex_Data_Index(Inside, Of_Vertex.Id);
+
+      Data : constant Vertex_Data := Inside.Edge_Pointers(Vertex_Index);
+   begin
+      -- There aren't any outgoing edges
+      if (Data.First_Outgoing_Edge = No_Index) then
+         return Empty;
+      end if;
+
+      declare
+         First : constant Maybe_Index := Data.First_Outgoing_Edge;
+         Last : constant Maybe_Index :=
+            Data.First_Outgoing_Edge + Data.Outgoing_Edges - 1;
+
+         Result : Edges(Positive range 1 .. Data.Outgoing_Edges);
+         Result_Index : Positive := 1;
+      begin
+         for Edge_Index in First .. Last loop
+            Result(Result_Index) := Inside.Edges(Edge_Index).Edge;
+            Result_Index := Result_Index + 1;
+         end loop;
+
+         return Result;
+      end;
+   end Outgoing_Edges;
+
+   function Incoming_Edges
+     (Inside : Graph_Data;
+      Of_Vertex : Vertex)
+     return Edges
+   is
+      Empty : constant Edges(Positive range 1..0) := (others => <>);
+
+      Vertex_Index : constant Index :=
+         Find_Vertex_Data_Index(Inside, Of_Vertex.Id);
+
+      Vertex_Data : constant Directed_Graph.Vertex_Data :=
+         Inside.Edge_Pointers(Vertex_Index);
+   begin
+      if Vertex_Data.First_Incoming_Edge = No_Index then
+         return Empty;
+      end if;
+
+      declare
+         Result : Edges(Positive range 1 .. Vertex_Data.Incoming_Edges);
+         Result_Index : Positive := 1;
+
+         Current_Edge_Index : Maybe_Index := Vertex_Data.First_Incoming_Edge;
+         Current_Edge_Data : Edge_Data;
+      begin
+         while Current_Edge_Index /= No_Index loop
+            Current_Edge_Data := Inside.Edges(Current_Edge_Index);
+            Result(Result_Index) := Current_Edge_Data.Edge;
+
+            Current_Edge_Index := Current_Edge_Data.Next_Incoming;
+            Result_Index := Result_Index + 1;
+         end loop;
+
+         return Result;
+      end;
+   end Incoming_Edges;
+
+   function Neighbours
+     (Inside : Graph_Data;
+      Of_Vertex : Vertex)
+     return Verticies
+   is
+      Outgoing : constant Edges := Outgoing_Edges(Inside, Of_Vertex);
+
+      Result : Verticies(Outgoing'Range);
+      Id : Vertex_Id;
+      Vertex_Index : Index;
+   begin
+      for Index in Result'Range loop
+         Id := Outgoing(Index).Source;
+         Vertex_Index := Find_Vertex_Data_Index(Inside, Id);
+         Result(Index) := Inside.Edge_Pointers(Vertex_Index).Vertex;
+      end loop;
+
+      return Result;
+   end;
+
    procedure Dump(Graph : Graph_Data)
    is
       Current_Index : Natural := 0;
@@ -394,6 +459,5 @@ is
          Put("),");
          New_Line;
       end loop;
-      Current_Index := 0;
    end Dump;
 end Directed_Graph;

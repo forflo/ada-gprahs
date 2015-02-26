@@ -39,7 +39,7 @@ is
      (Into : in out Graph_Data;
       From : Vertex;
       To : Vertex;
-      via : Edge_Decoration)
+      Via : Edge_Decoration)
      return Edge
    with
      Pre => Contains(Into, Vertex => From) and
@@ -52,34 +52,34 @@ is
    function All_Verticies(Inside : Graph_Data) return Verticies;
    function All_Edges(Inside : Graph_Data) return Edges;
 
-   --  function Neighbours
-   --    (Inside : Graph_Data;
-   --     Of_Vertex : Vertex)
-   --    return Verticies
-   --  with
-   --    Pre => Contains(Inside, Of_Vertex),
-   --    Post => (for all Value of Neighbours'Result =>
-   --               Connected_Directly(Inside, From => Of_Vertex, To => Value));
+   function Neighbours
+     (Inside : Graph_Data;
+      Of_Vertex : Vertex)
+     return Verticies
+   with
+     Pre => Contains(Inside, Of_Vertex),
+     Post => (for all Value of Neighbours'Result =>
+                Connected_Directly(Inside, From => Of_Vertex, To => Value));
 
-   --  function Outgoing_Edges
-   --    (Inside : Graph_Data;
-   --     Of_Vertex : Vertex)
-   --    return Edges
-   --  with
-   --    Pre => Contains(Inside, Of_Vertex),
-   --    Post => (for all Value of Outgoing_Edges'Result =>
-   --               Contains(Inside, Edge => Value) and
-   --               Value.Source = Of_Vertex.Id);
-
-   --  function Incoming_Edges
-   --    (Inside : Graph_Data;
-   --     Of_Vertex : Vertex)
-   --    return Edges
-   --  with
-   --    Pre => Contains(Inside, Of_Vertex),
-   --    Post => (for all Value of Incoming_Edges'Result =>
-   --               Contains(Inside, Edge => Value) and
-   --               Value.Target = Of_Vertex.Id);
+   function Outgoing_Edges
+     (Inside : Graph_Data;
+      Of_Vertex : Vertex)
+     return Edges
+   with
+     Pre => Contains(Inside, Of_Vertex),
+     Post => (for all Value of Outgoing_Edges'Result =>
+                Contains(Inside, Edge => Value) and
+                Value.Source.Id = Of_Vertex.Id);
+   
+   function Incoming_Edges
+     (Inside : Graph_Data;
+      Of_Vertex : Vertex)
+     return Edges
+   with
+     Pre => Contains(Inside, Of_Vertex),
+     Post => (for all Value of Incoming_Edges'Result =>
+                Contains(Inside, Edge => Value) and
+                Value.Target.Id = Of_Vertex.Id);
 
    -- Assertion Properties
    function Contains(Inside : Graph_Data; Vertex : Directed_Graph.Vertex) return Boolean;
