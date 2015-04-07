@@ -126,6 +126,7 @@ is
          Decoration => via,
          Source => From.Id,
          Target => To.Id);
+
       -- we can only determine the Next_Incoming
       -- once we looked ad the target Vertex_Data
       New_Edge_Data : Edge_Data :=
@@ -236,6 +237,9 @@ is
            (if Target_Data.First_Incoming_Edge >= New_Edge_Index
             then Target_Data.First_Incoming_Edge + 1
             else Target_Data.First_Incoming_Edge);
+
+         -- TODO: These are 2 runs over the vector (one for insert, one for bumping)
+         -- For effeifiency we should merge them into one go
 
          Edge_Vectors.Insert
            (Container => Into.Edges,

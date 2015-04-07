@@ -69,7 +69,7 @@ is
      Pre => Contains(Inside, Of_Vertex),
      Post => (for all Value of Outgoing_Edges'Result =>
                 Contains(Inside, Edge => Value) and
-                Value.Source.Id = Of_Vertex.Id);
+                Value.Source = Of_Vertex.Id);
    
    function Incoming_Edges
      (Inside : Graph_Data;
@@ -79,7 +79,7 @@ is
      Pre => Contains(Inside, Of_Vertex),
      Post => (for all Value of Incoming_Edges'Result =>
                 Contains(Inside, Edge => Value) and
-                Value.Target.Id = Of_Vertex.Id);
+                Value.Target = Of_Vertex.Id);
 
    -- Assertion Properties
    function Contains(Inside : Graph_Data; Vertex : Directed_Graph.Vertex) return Boolean;

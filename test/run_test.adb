@@ -30,10 +30,12 @@ begin
    E2 := Add_New_Edge(Graph, V2, V3, 5);
    E3 := Add_New_Edge(Graph, V1, V3, 5);
    E4 := Add_New_Edge(Graph, V4, V3, 5);
+
    Dump(Graph);
    Put(Connected_Directly(Graph, V3, V2));
    New_Line;
+
    Put(All_Verticies(Graph)'Length);
    Put(All_Edges(Graph)'Length);
-   Put(Outgoing_Edges(Graph, V3)'Length);
+   Put(Outgoing_Edges(Graph, V1)'Length);
 end Run_Test;
