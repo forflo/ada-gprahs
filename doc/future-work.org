@@ -1,0 +1,74 @@
+* Fixes
+** Efficiency issues
+*** TODO reduce memory overhead
+**** TODO Use cumulative sums rather than index + length
+In the case of Outgoing_Edges this makes the amount of the impossible to
+determine up front! We have to return vectors or pay for 2 traversals.
+*** TODO Remove second traversal from Add_Edge
+As of now we insert and then bump all the pointers.
+We should merge this into one traversal
+* New Features
+** Sub-graph masks
+The basic idea is to have some kind of extra data structure
+which disables vertices/edges.
+To create a sub-graph you simple disable all the verticies and edges you wish to ignore.
+Alternatively you could specify the subset you want to keep.
+All insert and deletes happen on the big "father" graph.
+Should be named Focus or something, because these aren't truly independent sub-graphs.
+However given a Focus you can create a separate independent sub-graph.
+Effectively this allows you to do bulk operations.
+*** How do we represent a "Focus" ?
+**** General points
+Every time a vertex/edge gets touched, we have to look up
+whether or not it's blocked.
+**** Obvious approach, Boolean for each element
+The really stupid/obvious approach would be to have a record
+
+#+BEGIN_SRC ada
+  type Status is (Hidden, Visible);
+  type Insert_Behaviour is (Inclusive, Exclusive)
+
+  package Vertex_Status_Vect is new Ada.Containers.Vectors
+     (Index_Type => Vertex_Id,
+      Element_Type => Status)
+
+  package Edge_Status_Vect is new Ada.Containers.Vectors
+     (Index_Type => Vertex_Id,
+      Element_Type => Status)
+
+  record Focus
+     Father_Graph : Graph_Ref
+     Behaviour : Insert_Behaviour;
+     Vertex_Statuses : Vertex_Status_Vect.Vector;
+     Edge_Statuses : Edge_Status_Vect.Vector;
+  end record
+#+END_SRC
+
+Pros:
+- Easy and obvious
+- Reasonably fast in the "usual" case
+- Combining layers makes sense
+
+Cons:
+- If there happen a lot of deletes without re-labelling of Ids
+  There could be a lot of useless Not_In_Graph entries
+- There is no functional difference between black and white listing
+  This concept only makes (implementations-wise) sense when we have a sparse version
+- Every Insert requires an update to the Status data
+- Inclusive vs. Exclusive behaviour has to be coded explicitly
+**** Sparse Focus
+
+**** Label stuff in Full_Graph
+Pro:
+- Fast
+- Easy to implement
+- hardly any API change
+
+Cons:
+- Impossible to keep different Focuses on the same graph
+*** What about Layering Merging ?
+* General points
+** Deletes are fucking evil!
+Without deletes we would not need Ids.
+The "obvious" Focus implementation would always be dense and the awkward Not_In_Graph state would disappear
+Deleting should be a bulk operation which creates a new independent graph.
